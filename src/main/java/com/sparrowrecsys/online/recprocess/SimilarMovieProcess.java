@@ -68,11 +68,13 @@ public class SimilarMovieProcess {
             }
         }
 
+        //召回所有电影中排名最高的100部电影
         List<Movie> highRatingCandidates = DataManager.getInstance().getMovies(100, "rating");
         for (Movie candidate : highRatingCandidates){
             candidateMap.put(candidate.getMovieId(), candidate);
         }
 
+        //召回最新上映的100部电影
         List<Movie> latestCandidates = DataManager.getInstance().getMovies(100, "releaseYear");
         for (Movie candidate : latestCandidates){
             candidateMap.put(candidate.getMovieId(), candidate);
@@ -92,7 +94,7 @@ public class SimilarMovieProcess {
         if (null == movie || null == movie.getEmb()){
             return null;
         }
-
+        //获取所有影片候选集(这里取评分排名前10000的影片作为全部候选集)
         List<Movie> allCandidates = DataManager.getInstance().getMovies(10000, "rating");
         HashMap<Movie,Double> movieScoreMap = new HashMap<>();
         for (Movie candidate : allCandidates){
