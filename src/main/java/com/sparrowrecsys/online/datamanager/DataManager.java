@@ -256,6 +256,8 @@ public class DataManager {
             switch (sortBy){
                 case "rating":movies.sort((m1, m2) -> Double.compare(m2.getAverageRating(), m1.getAverageRating()));break;
                 case "releaseYear": movies.sort((m1, m2) -> Integer.compare(m2.getReleaseYear(), m1.getReleaseYear()));break;
+                // 新添加的按照电影的热度“popularity”排序，电影被评价的次数
+                case "popularity": movies.sort((m1, m2) -> Integer.compare(m2.getRatingNumber(), m1.getRatingNumber()));break;
                 default:
             }
 
