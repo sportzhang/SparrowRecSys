@@ -21,7 +21,7 @@ import scala.util.control.Breaks.{break, breakable}
 
 object Embedding {
 
-  val redisEndpoint = "localhost"
+  val redisEndpoint = "10.200.85.12"
   val redisPort = 6379
 
   def processItemSequence(sparkSession: SparkSession, rawSampleDataPath: String): RDD[Seq[String]] ={
@@ -76,8 +76,6 @@ object Embedding {
         userEmbeddings.append((userId,userEmb))
       })
 
-
-
     val embFolderPath = this.getClass.getResource("/webroot/modeldata/")
     val file = new File(embFolderPath.getPath + embOutputFilename)
     val bw = new BufferedWriter(new FileWriter(file))
@@ -88,7 +86,8 @@ object Embedding {
     bw.close()
 
     if (saveToRedis) {
-      val redisClient = new Jedis(redisEndpoint, redisPort)
+      val redisClient = new Jedis(redisEndpoint, redisPort, 100000)
+      redisClient.auth("6192699redis")
       val params = SetParams.setParams()
       //set ttl to 24hs
       params.ex(60 * 60 * 24)
@@ -123,7 +122,8 @@ object Embedding {
     bw.close()
 
     if (saveToRedis) {
-      val redisClient = new Jedis(redisEndpoint, redisPort)
+      val redisClient = new Jedis(redisEndpoint, redisPort, 100000)
+      redisClient.auth("6192699redis")
       val params = SetParams.setParams()
       //set ttl to 24hs
       params.ex(60 * 60 * 24)
@@ -228,18 +228,21 @@ object Embedding {
   }
 
   def embeddingLSH(spark:SparkSession, movieEmbMap:Map[String, Array[Float]]): Unit ={
-
+    //将电影embedding数据转换成dense Vector的形式，便于之后处理
     val movieEmbSeq = movieEmbMap.toSeq.map(item => (item._1, Vectors.dense(item._2.map(f => f.toDouble))))
     val movieEmbDF = spark.createDataFrame(movieEmbSeq).toDF("movieId", "emb")
 
     //LSH bucket model
+    //BucketLength 指的就是分桶公式中的分桶宽度 w，NumHashTables 指的是多桶策略中的分桶次数
     val bucketProjectionLSH = new BucketedRandomProjectionLSH()
       .setBucketLength(0.1)
       .setNumHashTables(3)
       .setInputCol("emb")
       .setOutputCol("bucketId")
 
+    //训练LSH分桶模型
     val bucketModel = bucketProjectionLSH.fit(movieEmbDF)
+    //进行分桶
     val embBucketResult = bucketModel.transform(movieEmbDF)
     println("movieId, emb, bucketId schema:")
     embBucketResult.printSchema()
@@ -280,7 +283,7 @@ object Embedding {
 
     val samples = processItemSequence(spark, rawSampleDataPath)
     val model = trainItem2vec(spark, samples, embLength, "item2vecEmb.csv", saveToRedis = false, "i2vEmb")
-    //graphEmb(samples, spark, embLength, "itemGraphEmb.csv", saveToRedis = true, "graphEmb")
-    //generateUserEmb(spark, rawSampleDataPath, model, embLength, "userEmb.csv", saveToRedis = false, "uEmb")
+    graphEmb(samples, spark, embLength, "itemGraphEmb.csv", saveToRedis = true, "graphEmb")
+    generateUserEmb(spark, rawSampleDataPath, model, embLength, "userEmb.csv", saveToRedis = true, "uEmb")
   }
 }
