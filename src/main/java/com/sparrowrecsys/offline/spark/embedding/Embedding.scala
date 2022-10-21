@@ -30,7 +30,7 @@ object Embedding {
     val ratingsResourcesPath = this.getClass.getResource(rawSampleDataPath)
     val ratingSamples = sparkSession.read.format("csv").option("header", "true").load(ratingsResourcesPath.getPath)
 
-    //sort by timestamp udf
+    //sort by timestamp udf, return movieId list
     val sortUdf: UserDefinedFunction = udf((rows: Seq[Row]) => {
       rows.map { case Row(movieId: String, timestamp: String) => (movieId, timestamp) }
         .sortBy { case (_, timestamp) => timestamp }
@@ -89,8 +89,8 @@ object Embedding {
       val redisClient = new Jedis(redisEndpoint, redisPort, 100000)
       redisClient.auth("6192699redis")
       val params = SetParams.setParams()
-      //set ttl to 24hs
-      params.ex(60 * 60 * 24)
+      //set ttl to 24hs*30days
+      params.ex(60 * 60 * 24 * 30)
 
       for (userEmb <- userEmbeddings) {
         redisClient.set(redisKeyPrefix + ":" + userEmb._1, userEmb._2.mkString(" "), params)
@@ -126,7 +126,7 @@ object Embedding {
       redisClient.auth("6192699redis")
       val params = SetParams.setParams()
       //set ttl to 24hs
-      params.ex(60 * 60 * 24)
+      params.ex(60 * 60 * 24 * 30)
       for (movieId <- model.getVectors.keys) {
         redisClient.set(redisKeyPrefix + ":" + movieId, model.getVectors(movieId).mkString(" "), params)
       }

@@ -69,6 +69,7 @@ numerical_columns = [tf.feature_column.numeric_column('releaseYear'),
                      tf.feature_column.numeric_column('userRatingStddev')]
 
 # cross feature between current movie and user historical movie
+# 生成了一个由“用户已好评电影”和“当前评价电影”组成的一个交叉特征
 rated_movie = tf.feature_column.categorical_column_with_identity(key='userRatedMovie1', num_buckets=1001)
 crossed_feature = tf.feature_column.indicator_column(tf.feature_column.crossed_column([movie_col, rated_movie], 10000))
 

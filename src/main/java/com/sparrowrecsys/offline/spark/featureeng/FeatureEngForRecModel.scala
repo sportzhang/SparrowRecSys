@@ -15,7 +15,7 @@ import scala.collection.{JavaConversions, mutable}
 object FeatureEngForRecModel {
 
   val NUMBER_PRECISION = 2
-  val redisEndpoint = "localhost"
+  val redisEndpoint = "10.200.85.12"
   val redisPort = 6379
 
   def addSampleLabel(ratingSamples:DataFrame): DataFrame ={
@@ -24,6 +24,7 @@ object FeatureEngForRecModel {
     val sampleCount = ratingSamples.count()
     ratingSamples.groupBy(col("rating")).count().orderBy(col("rating"))
       .withColumn("percentage", col("count")/sampleCount).show(100,truncate = false)
+    //统计样本中各个评分的数量，以及占比
 
     ratingSamples.withColumn("label", when(col("rating") >= 3.5, 1).otherwise(0))
   }
@@ -143,7 +144,8 @@ object FeatureEngForRecModel {
 
     val movieFeaturePrefix = "mf:"
 
-    val redisClient = new Jedis(redisEndpoint, redisPort)
+    val redisClient = new Jedis(redisEndpoint, redisPort, 100000)
+    redisClient.auth("6192699redis")
     val params = SetParams.setParams()
     //set ttl to 24hs * 30
     params.ex(60 * 60 * 24 * 30)
@@ -205,6 +207,8 @@ object FeatureEngForRecModel {
   }
 
 
+
+
   def extractAndSaveUserFeaturesToRedis(samples:DataFrame): DataFrame = {
     val userLatestSamples = samples.withColumn("userRowNum", row_number()
       .over(Window.partitionBy("userId")
@@ -220,7 +224,8 @@ object FeatureEngForRecModel {
 
     val userFeaturePrefix = "uf:"
 
-    val redisClient = new Jedis(redisEndpoint, redisPort)
+    val redisClient = new Jedis(redisEndpoint, redisPort, 100000)
+    redisClient.auth("6192699redis")
     val params = SetParams.setParams()
     //set ttl to 24hs * 30
     params.ex(60 * 60 * 24 * 30)
@@ -260,6 +265,7 @@ object FeatureEngForRecModel {
 
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
+    System.setProperty("hadoop.home.dir","D:\\hadoop")
 
     val conf = new SparkConf()
       .setMaster("local")

@@ -54,3 +54,18 @@ SparrowRecSys技术架构遵循经典的工业级深度学习推荐系统架构�
 * [Papers on Computational Advertising](https://github.com/wzhe06/Ad-papers) <br />
 * [Papers on Recommender System](https://github.com/wzhe06/Ad-papers) <br />
 * [CTR Model Based on Spark](https://github.com/wzhe06/SparkCTR) <br />
+
+
+## 项目运行问题
+- hadoop运行和spark配置 
+运行FeatureEngForRecModel报异常：java.io.IOException: (null) entry in command string: null chmod 0644 
+解决方法：
+  1. 下载 winutils.exe(https://github.com/steveloughran/winutils)  
+  2. Create hadoop folder in Your System, ex D:
+  Create bin folder in hadoop directory, ex : D:\hadoop\bin
+  paste winutils.exe in bin, ex: D:\hadoop\bin\winutils.exe
+  3. Set Environment Variable HADOOP_HOME = D:\hadoop
+  In User Variables in System Properties -> Advance System Settings
+  Create New Variable Name: HADOOP_HOME Path: D:\hadoop\
+  4. 在main函数中加入System.setProperty("hadoop.home.dir", "D:\\hadoop-2.7.2"); 
+参考：https://stackoverflow.com/questions/40764807/null-entry-in-command-string-exception-in-saveastextfile-on-pyspark
