@@ -26,7 +26,7 @@ object Embedding {
 
   def processItemSequence(sparkSession: SparkSession, rawSampleDataPath: String): RDD[Seq[String]] ={
 
-    //path of rating data
+    // path of rating data
     val ratingsResourcesPath = this.getClass.getResource(rawSampleDataPath)
     val ratingSamples = sparkSession.read.format("csv").option("header", "true").load(ratingsResourcesPath.getPath)
 
@@ -53,6 +53,7 @@ object Embedding {
   def generateUserEmb(sparkSession: SparkSession, rawSampleDataPath: String, word2VecModel: Word2VecModel, embLength:Int, embOutputFilename:String, saveToRedis:Boolean, redisKeyPrefix:String): Unit ={
     val ratingsResourcesPath = this.getClass.getResource(rawSampleDataPath)
     val ratingSamples = sparkSession.read.format("csv").option("header", "true").load(ratingsResourcesPath.getPath)
+    println("show ratingSamples 10 result:")
     ratingSamples.show(10, false)
 
     val userEmbeddings = new ArrayBuffer[(String, Array[Float])]()
@@ -62,6 +63,7 @@ object Embedding {
         val userId = user._1
         var userEmb = new Array[Float](embLength)
 
+        // 这里的userEmb计算方式是：对于每个用户，将其所有评分过的电影的embedding向量求和，然后除以评分过的电影数，avg_pooling
         var movieCount = 0
         userEmb = user._2.foldRight[Array[Float]](userEmb)((row, newEmb) => {
           val movieId = row.getAs[String]("movieId")
@@ -227,6 +229,7 @@ object Embedding {
     (transitionMatrix, itemDistribution)
   }
 
+  /*局部敏感哈希LSH算法，解决向量空间内最近邻的快速搜索问题，具体参见专栏12节内容*/
   def embeddingLSH(spark:SparkSession, movieEmbMap:Map[String, Array[Float]]): Unit ={
     //将电影embedding数据转换成dense Vector的形式，便于之后处理
     val movieEmbSeq = movieEmbMap.toSeq.map(item => (item._1, Vectors.dense(item._2.map(f => f.toDouble))))
@@ -283,7 +286,7 @@ object Embedding {
     val embLength = 10
 
     val samples = processItemSequence(spark, rawSampleDataPath)
-    val model = trainItem2vec(spark, samples, embLength, "item2vecEmb.csv", saveToRedis = false, "i2vEmb")
+    val model = trainItem2vec(spark, samples, embLength, "item2vecEmb.csv", saveToRedis = true, "i2vEmb")
     graphEmb(samples, spark, embLength, "itemGraphEmb.csv", saveToRedis = true, "graphEmb")
     generateUserEmb(spark, rawSampleDataPath, model, embLength, "userEmb.csv", saveToRedis = true, "uEmb")
   }
