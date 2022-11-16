@@ -2,12 +2,11 @@ import tensorflow as tf
 
 # Training samples path, change to your local path
 training_samples_file_path = tf.keras.utils.get_file("trainingSamples.csv",
-                                                     "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
-                                                     "/resources/webroot/sampledata/trainingSamples.csv")
+                                                     "file:////home/sdb1/kevin/SparrowRecSys/src/main/resources/webroot/sampledata/trainingSamples.csv")
+
 # Test samples path, change to your local path
 test_samples_file_path = tf.keras.utils.get_file("testSamples.csv",
-                                                 "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
-                                                 "/resources/webroot/sampledata/testSamples.csv")
+                                                 "file:////home/sdb1/kevin/SparrowRecSys/src/main/resources/webroot/sampledata/testSamples.csv")
 
 
 # load sample as tf dataset
@@ -23,6 +22,7 @@ def get_dataset(file_path):
 
 
 # split as test dataset and training dataset
+
 train_dataset = get_dataset(training_samples_file_path)
 test_dataset = get_dataset(test_samples_file_path)
 
@@ -59,6 +59,7 @@ user_col = tf.feature_column.categorical_column_with_identity(key='userId', num_
 user_emb_col = tf.feature_column.embedding_column(user_col, 10)
 categorical_columns.append(user_emb_col)
 
+
 # all numerical features
 numerical_columns = [tf.feature_column.numeric_column('releaseYear'),
                      tf.feature_column.numeric_column('movieRatingCount'),
@@ -91,6 +92,8 @@ print('\n\nTest Loss {}, Test Accuracy {}, Test ROC AUC {}, Test PR AUC {}'.form
                                                                                    test_roc_auc, test_pr_auc))
 
 # print some predict results
+# test_dataset is A dataset, where each element is a (features, labels) tuple.
+# 所以获取test_dataset的第一个元素，就是一个(features, labels) tuple，一共有12个元素，features和labels的长度都是12
 predictions = model.predict(test_dataset)
 for prediction, goodRating in zip(predictions[:12], list(test_dataset)[0][1][:12]):
     print("Predicted good rating: {:.2%}".format(prediction[0]),

@@ -2,12 +2,11 @@ import tensorflow as tf
 
 # Training samples path, change to your local path
 training_samples_file_path = tf.keras.utils.get_file("trainingSamples.csv",
-                                                     "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
-                                                     "/resources/webroot/sampledata/trainingSamples.csv")
+                                                     "file:////home/sdb1/kevin/SparrowRecSys/src/main/resources/webroot/sampledata/trainingSamples.csv")
+
 # Test samples path, change to your local path
 test_samples_file_path = tf.keras.utils.get_file("testSamples.csv",
-                                                 "file:///Users/zhewang/Workspace/SparrowRecSys/src/main"
-                                                 "/resources/webroot/sampledata/testSamples.csv")
+                                                 "file:////home/sdb1/kevin/SparrowRecSys/src/main/resources/webroot/sampledata/testSamples.csv")
 
 
 # load sample as tf dataset
@@ -69,6 +68,7 @@ user_genre_col = tf.feature_column.categorical_column_with_vocabulary_list(key="
                                                                            vocabulary_list=genre_vocab)
 user_genre_emb_col = tf.feature_column.embedding_column(user_genre_col, 10)
 user_genre_ind_col = tf.feature_column.indicator_column(user_genre_col) # user genre indicator columns
+
 # item genre embedding feature
 item_genre_col = tf.feature_column.categorical_column_with_vocabulary_list(key="movieGenre1",
                                                                            vocabulary_list=genre_vocab)
@@ -97,10 +97,13 @@ user_genre_emb_layer = tf.keras.layers.DenseFeatures([user_genre_emb_col])(input
 fm_first_order_layer = tf.keras.layers.DenseFeatures(fm_first_order_columns)(inputs)
 
 # FM part, cross different categorical feature embeddings
+# FM部分选择了四个用于交叉的特征，分别是电影ID、用户ID、电影类型和用户喜欢的类型
+# 使用Dot Layer把用户特征和电影特征两两交叉，得到交叉特征
 product_layer_item_user = tf.keras.layers.Dot(axes=1)([item_emb_layer, user_emb_layer])
 product_layer_item_genre_user_genre = tf.keras.layers.Dot(axes=1)([item_genre_emb_layer, user_genre_emb_layer])
 product_layer_item_genre_user = tf.keras.layers.Dot(axes=1)([item_genre_emb_layer, user_emb_layer])
 product_layer_user_genre_item = tf.keras.layers.Dot(axes=1)([item_emb_layer, user_genre_emb_layer])
+
 
 # deep part, MLP to generalize all input features
 deep = tf.keras.layers.DenseFeatures(deep_feature_columns)(inputs)
